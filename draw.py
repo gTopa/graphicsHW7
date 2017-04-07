@@ -2,32 +2,35 @@ from display import *
 from matrix import *
 from math import *
 
+def get_normal():
+    pass
+    
 def add_polygon( points, x0, y0, z0, x1, y1, z1, x2, y2, z2 ):
     add_point(points,x0,y0,z0)
     add_point(points,x1,y1,z1)
     add_point(points,x2,y2,z2)
 
 def draw_polygons( points, screen, color ):
-    if len(matrix) < 3:
+    if len(points) < 3:
         print 'Need at least 3 points to draw'
         return
     
     point = 0
-    while point < len(matrix) - 1:
-        draw_line( int(matrix[point][0]),
-                   int(matrix[point][1]),
-                   int(matrix[point+1][0]),
-                   int(matrix[point+1][1]),
+    while point < len(points) - 1:
+        draw_line( int(points[point][0]),
+                   int(points[point][1]),
+                   int(points[point+1][0]),
+                   int(points[point+1][1]),
                    screen, color)    
-        draw_line( int(matrix[point+1][0]),
-                   int(matrix[point+1][1]),
-                   int(matrix[point+2][0]),
-                   int(matrix[point+2][1]),
+        draw_line( int(points[point+1][0]),
+                   int(points[point+1][1]),
+                   int(points[point+2][0]),
+                   int(points[point+2][1]),
                    screen, color)    
-        draw_line( int(matrix[point][0]),
-                   int(matrix[point][1]),
-                   int(matrix[point+2][0]),
-                   int(matrix[point+2][1]),
+        draw_line( int(points[point+2][0]),
+                   int(points[point+2][1]),
+                   int(points[point][0]),
+                   int(points[point][1]),
                    screen, color)    
         point+= 3
 
@@ -53,6 +56,7 @@ def add_box( points, x, y, z, width, height, depth ):
 
 def add_sphere( edges, cx, cy, cz, r, step ):
     points = generate_sphere(cx, cy, cz, r, step)
+    length_points = len(points)
     num_steps = int(1/step+0.1)
     
     lat_start = 0
@@ -64,14 +68,43 @@ def add_sphere( edges, cx, cy, cz, r, step ):
     for lat in range(lat_start, lat_stop):
         for longt in range(longt_start, longt_stop+1):
             index = lat * num_steps + longt
-            
-            add_edge(edges, points[index][0],
-                     points[index][1],
-                     points[index][2],
-                     points[index][0]+1,
-                     points[index][1]+1,
-                     points[index][2]+1 )
-
+            add_polygon(edges, points[index][0],
+                    points[index][1],
+                    points[index][2],
+                    points[(index+1)%length_points][0],
+                    points[(index+1)%length_points][1],
+                    points[(index+1)%length_points][2],
+                    points[(index+num_steps+1)%length_points][0],
+                    points[(index+num_steps+1)%length_points][1],
+                    points[(index+num_steps+1)%length_points][2])
+            add_polygon(edges, points[(index+num_steps+1)%length_points][0],
+                    points[(index+num_steps+1)%length_points][1],
+                    points[(index+num_steps+1)%length_points][2],
+                    points[(index+num_steps)%length_points][0],
+                    points[(index+num_steps)%length_points][1],
+                    points[(index+num_steps)%length_points][2],
+                    points[index][0],
+                    points[index][1], 
+                    points[index][2] )
+'''            add_polygon(edges, points[index][0],
+                    points[index][1],
+                    points[index][2],
+                    points[index+1][0],
+                    points[index+1][1],
+                    points[index+1][2],
+                    points[(index+num_steps+1)%(num_steps*num_steps)][0],
+                    points[(index+num_steps+1)%(num_steps*num_steps)][1],
+                    points[(index+num_steps+1)%(num_steps*num_steps)][2])
+            add_polygon(edges, points[(index+num_steps+1)%(num_steps*num_steps)][0],
+                    points[(index+num_steps+1)%(num_steps*num_steps)][1],
+                    points[(index+num_steps+1)%(num_steps*num_steps)][2],
+                    points[(index+num_steps)%(num_steps*num_steps)][0],
+                    points[(index+num_steps)%(num_steps*num_steps)][1],
+                    points[(index+num_steps)%(num_steps*num_steps)][2],
+                    points[index][0],
+                    points[index][1], 
+                    points[index][2] )
+'''
 def generate_sphere( cx, cy, cz, r, step ):
     points = []
     num_steps = int(1/step+0.1)
