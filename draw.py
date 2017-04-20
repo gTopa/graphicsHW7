@@ -2,8 +2,15 @@ from display import *
 from matrix import *
 from math import *
 
-def get_normal():
-    pass
+def get_nz(x0,y0,z0,x1,y1,z1,x2,y2,z2):
+    ax=x1-x0
+    ay=y1-y0
+    az=z1-z0
+    bx=x2-x0
+    by=y2-y0
+    bz=z2-z0
+    nz=ax*by-ay*bx
+    return nz
     
 def add_polygon( points, x0, y0, z0, x1, y1, z1, x2, y2, z2 ):
     add_point(points,x0,y0,z0)
@@ -17,21 +24,22 @@ def draw_polygons( points, screen, color ):
     
     point = 0
     while point < len(points) - 1:
-        draw_line( int(points[point][0]),
-                   int(points[point][1]),
-                   int(points[point+1][0]),
-                   int(points[point+1][1]),
-                   screen, color)    
-        draw_line( int(points[point+1][0]),
-                   int(points[point+1][1]),
-                   int(points[point+2][0]),
-                   int(points[point+2][1]),
-                   screen, color)    
-        draw_line( int(points[point+2][0]),
-                   int(points[point+2][1]),
-                   int(points[point][0]),
-                   int(points[point][1]),
-                   screen, color)    
+        if(get_nz(points[point][0],points[point][1],points[point][2],points[point+1][0],points[point+1][1],points[point+1][2],points[point+2][0],points[point+2][1],points[point+2][2])>0):
+            draw_line( int(points[point][0]),
+                       int(points[point][1]),
+                       int(points[point+1][0]),
+                       int(points[point+1][1]),
+                       screen, color)    
+            draw_line( int(points[point+1][0]),
+                       int(points[point+1][1]),
+                       int(points[point+2][0]),
+                       int(points[point+2][1]),
+                       screen, color)    
+            draw_line( int(points[point+2][0]),
+                       int(points[point+2][1]),
+                       int(points[point][0]),
+                       int(points[point][1]),
+                       screen, color)    
         point+= 3
 
 def add_box( points, x, y, z, width, height, depth ):
@@ -86,25 +94,7 @@ def add_sphere( edges, cx, cy, cz, r, step ):
                     points[index][0],
                     points[index][1], 
                     points[index][2] )
-'''            add_polygon(edges, points[index][0],
-                    points[index][1],
-                    points[index][2],
-                    points[index+1][0],
-                    points[index+1][1],
-                    points[index+1][2],
-                    points[(index+num_steps+1)%(num_steps*num_steps)][0],
-                    points[(index+num_steps+1)%(num_steps*num_steps)][1],
-                    points[(index+num_steps+1)%(num_steps*num_steps)][2])
-            add_polygon(edges, points[(index+num_steps+1)%(num_steps*num_steps)][0],
-                    points[(index+num_steps+1)%(num_steps*num_steps)][1],
-                    points[(index+num_steps+1)%(num_steps*num_steps)][2],
-                    points[(index+num_steps)%(num_steps*num_steps)][0],
-                    points[(index+num_steps)%(num_steps*num_steps)][1],
-                    points[(index+num_steps)%(num_steps*num_steps)][2],
-                    points[index][0],
-                    points[index][1], 
-                    points[index][2] )
-'''
+
 def generate_sphere( cx, cy, cz, r, step ):
     points = []
     num_steps = int(1/step+0.1)
@@ -130,23 +120,37 @@ def generate_sphere( cx, cy, cz, r, step ):
 def add_torus( edges, cx, cy, cz, r0, r1, step ):
     points = generate_torus(cx, cy, cz, r0, r1, step)
     num_steps = int(1/step+0.1)
-    
+    length_points = len(points)
+
     lat_start = 0
     lat_stop = num_steps
     longt_start = 0
     longt_stop = num_steps
     
     for lat in range(lat_start, lat_stop):
-        for longt in range(longt_start, longt_stop):
+        for longt in range(longt_start, longt_stop+1):
             index = lat * num_steps + longt
-            
-            add_edge(edges, points[index][0],
-                     points[index][1],
-                     points[index][2],
-                     points[index][0]+1,
-                     points[index][1]+1,
-                     points[index][2]+1 )
 
+            add_polygon(edges, points[index%length_points][0],
+                    points[index%length_points][1],
+                    points[index%length_points][2],
+                    points[(index+1)%length_points][0],
+                    points[(index+1)%length_points][1],
+                    points[(index+1)%length_points][2],
+                    points[(index+num_steps+1)%length_points][0],
+                    points[(index+num_steps+1)%length_points][1],
+                    points[(index+num_steps+1)%length_points][2])
+            add_polygon(edges, points[(index+num_steps+1)%length_points][0],
+                    points[(index+num_steps+1)%length_points][1],
+                    points[(index+num_steps+1)%length_points][2],
+                    points[(index+num_steps)%length_points][0],
+                    points[(index+num_steps)%length_points][1],
+                    points[(index+num_steps)%length_points][2],
+                    points[index%length_points][0],
+                    points[index%length_points][1], 
+                    points[index%length_points][2] )
+            
+            
 def generate_torus( cx, cy, cz, r0, r1, step ):
     points = []
     num_steps = int(1/step+0.1)
@@ -156,8 +160,6 @@ def generate_torus( cx, cy, cz, r0, r1, step ):
     circ_start = 0
     circ_stop = num_steps
 
-    print num_steps
-    
     for rotation in range(rot_start, rot_stop):
         rot = step * rotation
         for circle in range(circ_start, circ_stop):
